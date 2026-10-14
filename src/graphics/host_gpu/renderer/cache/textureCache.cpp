@@ -42,8 +42,10 @@ constexpr uint64_t NumFramesBeforeRemoval = 32;
 	                           : desc.view_info.format;
 	const bool  cmask    = metadata.kind == ImageMetadataKind::Cmask;
 	if (cmask ? code == 0 : code == 0x20) {
-		// Register clears belong to the color buffer; the texture pipe cannot decode them.
-		return desc.type == TextureCache::BindingType::RenderTarget &&
+		// Register clears belong to the color buffer or scan-out; the texture pipe cannot decode
+		// them.
+		return (desc.type == TextureCache::BindingType::RenderTarget ||
+		        desc.type == TextureCache::BindingType::VideoOut) &&
 		       metadata.clear_register_valid &&
 		       DecodePackedColorClear(format, metadata.clear_word, clear);
 	}

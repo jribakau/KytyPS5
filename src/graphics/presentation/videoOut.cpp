@@ -586,6 +586,9 @@ Graphics::ImageInfo BufferAttributeGroup::ImageInfo(const VideoOutBuffer& buffer
 		info.metadata.kind        = Graphics::ImageMetadataKind::Dcc;
 		info.metadata.control     = attribute.dcc_control;
 		info.metadata.compression = compression;
+		// Clear-to-register DCC keys scan out as the CB clear color supplied with the buffer.
+		info.metadata.clear_word           = attribute.dcc_cb_register_clear_color;
+		info.metadata.clear_register_valid = true;
 	}
 	Graphics::ImageOps::Validate(info);
 	if (!Graphics::IsSupportedVideoOutFormat(info)) {
