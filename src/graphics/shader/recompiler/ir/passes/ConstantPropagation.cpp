@@ -610,9 +610,15 @@ void FoldInstruction(Block& block, Block::iterator instruction,
 				const auto mask = Arg(inst, arm);
 				const auto* shifted = Arg(inst, arm ^ 1u).TryInstruction();
 				if (!IsImmediate(mask, Type::U32) || shifted == nullptr ||
-				    shifted->GetOpcode() != ValueOpcode::ShiftLeftLogical32 || !HasOneUse(*shifted)) continue;
+				    shifted->GetOpcode() != ValueOpcode::ShiftLeftLogical32) continue;
 				const auto shift = Arg(*shifted, 1);
 				if (!IsImmediate(shift, Type::U32) || shift.U32() >= 32u) continue;
+				// A mask entirely below the shift selects only zero bits.
+				if ((mask.U32() >> shift.U32()) == 0u) {
+					Replace(inst, Value(0u));
+					return;
+				}
+				if (!HasOneUse(*shifted)) continue;
 				const auto masked = worklist.Prepend(block, instruction, ValueOpcode::BitwiseAnd32,
 				    {Arg(*shifted, 0), Value(mask.U32() >> shift.U32())});
 				Replace(inst, Value(&*worklist.Prepend(block, instruction, ValueOpcode::ShiftLeftLogical32,

@@ -123,6 +123,19 @@ uint32_t ReflectTessellationStride(const Decoder::Program& program, bool local,
 					if (rhs.constant == 0u && third.constant == 8u) value = constant(0u);
 				}
 				break;
+			case Opcode::V_AND_B32:
+				if (lhs.kind == Kind::Affine && lhs.coefficient == 0u && rhs.kind == Kind::Affine &&
+				    rhs.coefficient == 0u) {
+					value = constant(lhs.constant & rhs.constant);
+				} else if (lhs.kind == Kind::PackedControlPoint ||
+				           rhs.kind == Kind::PackedControlPoint) {
+					// A low-byte mask selects the patch ordinal, like an SDWA byte read.
+					const auto mask = lhs.kind == Kind::PackedControlPoint ? rhs : lhs;
+					if (mask.kind == Kind::Affine && mask.coefficient == 0u &&
+					    (mask.constant & ~0xffu) == 0u)
+						value = constant(0u);
+				}
+				break;
 			case Opcode::V_MUL_U32_U24: value = multiply(low24(lhs), low24(rhs)); break;
 			case Opcode::V_MAD_U32_U24: value = add(multiply(low24(lhs), low24(rhs)), third); break;
 			case Opcode::V_LSHL_ADD_U32:
